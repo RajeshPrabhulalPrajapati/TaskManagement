@@ -46,6 +46,32 @@ export class NotesComponent implements OnInit {
       console.warn('App not running inside Electron!');
     }
 
+    this.ipc?.on('test', (event,msg) => {      
+      console.log(msg);     
+    });
+
+    this.ipc?.on('update_available', () => {
+      console.log('update_available');      
+      const message = document.getElementById('message');
+      const notification = document.getElementById('notification');
+
+      this.ipc?.removeAllListeners('update_available');        
+      message ? message.innerText = 'A new update is available. Downloading now...':"";
+      notification ? notification.classList.remove('hidden') :"";
+
+    });
+    this.ipc?.on('update_downloaded', () => {
+      console.log('update_downloaded');     
+      const message = document.getElementById('message');
+      const notification = document.getElementById('notification');    
+      const restartButton = document.getElementById('restart-button');
+
+      this.ipc?.removeAllListeners('update_downloaded');     ;
+      message ? message.innerText = 'Update Downloaded. It will be installed on restart. Restart now?':"";
+      restartButton ? restartButton.classList.remove('hidden'):"";
+      notification ? notification.classList.remove('hidden'):"";
+    });
+
   }
 
   ngOnInit(): void {
@@ -76,6 +102,15 @@ export class NotesComponent implements OnInit {
       this.myInput?.nativeElement.click();  
     }, 1000);
      
+  }
+
+  closeNotification() {
+    const notification = document.getElementById('notification');
+    notification ? notification.classList.add('hidden'):"";
+  }
+
+  restartApp() {
+    this.ipc?.send('restart_app');
   }
 
   initializeVoiceRecognitionCallback(): void {

@@ -16,8 +16,7 @@ const routes: Routes = [
   // },
   {
     path:'',
-    component:NotesComponent,
-    canActivate: [NotesGuardService]
+    component:NotesComponent    
   },
   // {
   //   path:'',
