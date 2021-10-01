@@ -1,0 +1,38 @@
+    <div class="main">       
+        <!-- Sing in  Form -->
+        <section class="sign-in">
+            <div class="container">
+                <div class="signin-content">
+                    <div class="signin-image">
+                        <figure><img src="/assets/images/signin-image.jpg" alt="sing up image"></figure>
+                        <a [routerLink]="['']"class="signup-image-link">Create an account</a>
+                    </div>
+
+                    <div class="signin-form">
+                        <h2 class="form-title">Sign in</h2>
+                        <form [formGroup]="formData" (ngSubmit)="onClickSubmit(formData.value)" class="register-form" id="login-form">
+                            <div class="form-group">
+                                <label for="your_name"><i class="zmdi zmdi-account material-icons-name"></i></label>
+                                <input type="text" formControlName="userName" name="userName" id="userName" placeholder="Your Name"/>
+                            </div>
+                            <div class="form-group">
+                                <label for="your_pass"><i class="zmdi zmdi-lock"></i></label>
+                                <input type="password"  formControlName="password" name="password" id="password" placeholder="Password"/>
+                            </div>
+                         
+                            <div class="form-group form-button">                                
+                                <input [disabled]="formData.invalid" type="submit" name="signin" id="signin" class="form-submit" value="Log in"/>
+                            </div>
+                            <div *ngIf="invalidCredentials">
+                                <span style="color:red">
+                                        Invalid credentials
+                                </span>
+                            </div>
+                        </form>                      
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </div>
+

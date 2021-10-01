@@ -1,0 +1,100 @@
+
+<div style="margin-top: 20px;margin-left: 20px;margin-right: 20px;">
+
+    <!-- <div style="margin-left: 55%;">
+        <a  style="font-size: 20px;cursor: pointer; " (click)="logout()" >Logout</a>
+    </div> -->
+    <div style="width:60%;margin-top: 10px;">
+        <form [formGroup]="formData" (ngSubmit)="addUpdateNote()" method="POST" class="register-form" id="register-form">
+            <div #myInput class="form-group">
+                <label for="title"><i class="zmdi zmdi-account material-icons-name"></i></label>
+                <input class ="form-control" formControlName="title" type="text" name="title" id="title" placeholder="Title"/>
+            </div>
+        
+            <div class="form-group">
+                <div>
+                    <div *ngIf="voiceActiveSectionDisabled || voiceText; else voicesection;">
+                       
+                        <img (click)="startVoiceRecognition()" src="assets/mic2.png" height="40" width="45" alt="Static Image" />
+
+                        <br>
+                    
+                      </div>
+                      <ng-template #voicesection>
+                        <ng-container *ngIf="!voiceActiveSectionError; else failure">
+                          <ng-container *ngIf="voiceText; else start">
+                           
+                          </ng-container>
+                          <ng-template #start>
+                            <ng-container
+                              *ngIf="voiceActiveSectionListening; else beginning">
+                              <span>Listening...</span>
+                            </ng-container>
+                            <ng-template #beginning>
+                              <span>Start talking...</span>
+                            </ng-template>
+                          </ng-template>
+                        </ng-container>
+                        <ng-template #failure>
+                        
+                        </ng-template>
+                       
+                      </ng-template>
+                </div>
+                <label for="content"><i class="zmdi zmdi-email"></i></label>
+                <textarea formControlName="content"  class="form-control rounded-0" id="content" rows="3" placeholder="Enter your content"></textarea>
+                <!-- <input class ="form-control" formControlName="content" type="text" name="content" id="content" placeholder="Enter your content"/> -->
+            </div>
+            <div class="form-group">
+                <label for="todo"><i class="zmdi zmdi-email"></i></label>
+                <input class ="form-control" formControlName="todo" type="text" name="todo" id="todo"  placeholder="What to do"/>
+            </div> 
+            <div class="form-group">
+                <select formControlName="priority"  name="priority" id="priority"  class="form-select" aria-label="Default select example">      
+                    <option value="0">Lower</option>
+                    <option value="1">Medium</option>
+                    <option value="2">Higher</option>
+                  </select>
+            </div>
+            <div class="d-flex ">
+            <div *ngIf="!isEdit" class="form-group form-button">
+                <input [disabled]="formData.invalid || isEdit" type="submit" name="signup" id="signup" class="form-submit" value="Add note"/>
+            </div>         
+            <div *ngIf="isEdit" class="form-group form-button">
+                <input [disabled]="formData.invalid || !isEdit " type="submit" name="udpate" id="udpate" class="form-submit" value="Update note"/>
+            </div>
+            </div>
+        </form>
+        </div>
+
+        <div style="margin-top: 20px;" *ngIf="notes.length>0">
+            <h3  class="d-flex justify-content-center">Notes</h3>
+            <table class="table table-bordered">
+                <thead>
+                  <tr>
+                    <th>Task No. </th>
+                    <th>Title</th>
+                    <th>Content</th>
+                    <th>Next to do</th>
+                    <th>Priority</th>
+                    <th>Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr mdbTableCol *ngFor="let note of notes;let ind = index">
+                    <td>{{ind+1}}</td>
+                    <th style="word-wrap: break-word;max-width: 100px;">{{note.title}}</th>
+                    <td style="word-wrap: break-word;max-width: 200px;">{{note.content}}</td>                    
+                    <td style="word-wrap: break-word;max-width: 100px;">{{note.todo}}</td>   
+                    <td>{{priorities[note.priority]}}</td>
+                    <td>                        
+                      
+                        <button (click)="editNote(note.noteId)" class="btn btn-warning"><i class="material-icons">&#xE254;</i></button> &nbsp; &nbsp;
+                        <button [disabled]="tmpId == note.noteId" (click)="deleteNote(note.noteId)"  class="btn btn-danger"><i class="material-icons">&#xE872;</i></button>
+                    </td>           
+                  </tr>                 
+                </tbody>
+              </table>
+              
+        </div>
+</div>
