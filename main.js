@@ -1,6 +1,8 @@
 const { autoUpdater } = require('electron-updater');
-const { app, BrowserWindow, globalShortcut, Tray, Menu, MenuItem,  dialog,ipcMain  } = require('electron');
+const { app, BrowserWindow, globalShortcut, Tray, Menu, MenuItem,  dialog,ipcMain,systemPreferences   } = require('electron');
 const os = require('os');
+systemPreferences.getMediaAccessStatus("microphone");
+
 const sqlite3 = require('@journeyapps/sqlcipher').verbose();
 // require('update-electron-app')({
 //   repo: 'https://github.com/RajeshPrabhulalPrajapati/EmployeeManagementElectronApp'
