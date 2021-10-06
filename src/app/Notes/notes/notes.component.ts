@@ -96,11 +96,7 @@ export class NotesComponent implements OnInit {
       currDate.setSeconds(0);     
       this.notes.map(n => {
         const tmpDate = new Date(n.notificationDateTime);
-        tmpDate.setSeconds(0);
-
-        console.log(tmpDate.getTime());
-        console.log(currDate.getTime());
-
+        tmpDate.setSeconds(0);   
         if (tmpDate.getFullYear() === currDate.getFullYear() &&
           tmpDate.getMonth() === currDate.getMonth() &&
           tmpDate.getDate() === currDate.getDate() &&
@@ -208,8 +204,7 @@ export class NotesComponent implements OnInit {
   }
 
   startVoiceRecognition(): void {
-    console.log("in startVoiceRecognition", this.tmpAnnyang);
-    console.log("annyang", annyang);
+  
     this.voiceActiveSectionDisabled = false;
     this.voiceActiveSectionError = false;
     this.voiceActiveSectionSuccess = false;
@@ -225,7 +220,7 @@ export class NotesComponent implements OnInit {
       this.initializeVoiceRecognitionCallback();
 
       this.tmpAnnyang.start({ autoRestart: false });
-      console.log("if found true for  tmpAnnyang");
+     
     }
   }
 

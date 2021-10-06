@@ -1,5 +1,5 @@
 const { autoUpdater } = require('electron-updater');
-const { app, BrowserWindow, globalShortcut, Tray, Menu, MenuItem, dialog, ipcMain, systemPreferences } = require('electron');
+const { app, BrowserWindow, globalShortcut, Tray, Menu, MenuItem, dialog, ipcMain, systemPreferences,session } = require('electron');
 const os = require('os');
 systemPreferences.getMediaAccessStatus("microphone");
 
@@ -53,7 +53,7 @@ async function createWindow() {
   //   database: 'C:/Users/Rajesh.Prajapati/Desktop/Rajesh Prajapati/SqLite/electron.sqlite',
   //   entities: [ Emp ],
   // });   
-  db = new sqlite3.Database(path.join(__dirname, `./assets/myDB`));
+  db = new sqlite3.Database(path.join(app.getPath('userData'), `/myDB`));
   db.run("PRAGMA cipher_compatibility = 4");
   db.run("PRAGMA key = 'Prabhulal'");
   //sqlite.connect(path.join(__dirname, `/dist/assets/myDB.db`),'myPass','aes-256-ctr');
@@ -73,6 +73,8 @@ async function createWindow() {
       webSecurity: false
     }
   });
+
+
 
   // mainWindow.loadFile(
   //     path.join(__dirname, `/src/index.html`)      
@@ -106,7 +108,7 @@ async function createWindow() {
   });
 
   mainWindow.on('close', function (event) {
-    const choice = require('electron').dialog.showMessageBoxSync(this,
+    const choice = dialog.showMessageBoxSync(this,
       {
         type: 'question',
         buttons: ['Yes', 'No'],
@@ -270,6 +272,8 @@ async function createWindow() {
 
     mainWindow.once('ready-to-show', () => {
       mainWindow.webContents.send('test', '0');
+     // mainWindow.webContents.send('test',app.getPath('userData'));
+      //mainWindow.webContents.send('test','in app ready');
       autoUpdater.checkForUpdatesAndNotify();
     });
   }
@@ -288,7 +292,7 @@ async function createWindow() {
         label: 'Quit', click: function () {
           app.isQuiting = true;
           app.quit();
-          //db.close();
+          db.close();
         }
       }
     ]);
@@ -330,6 +334,15 @@ autoUpdater.on("update-not-available", info => {
   console.log('update-not-available.....');
 });
 
+
+autoUpdater.on('update-available', () => {
+  mainWindow.webContents.send('update_available');
+});
+
+autoUpdater.on('update-downloaded', () => {
+  mainWindow.webContents.send('update_downloaded');
+});
+
 /*New Update Available*/
 // autoUpdater.on("update-available", info => {
 //   //your code
@@ -339,24 +352,30 @@ autoUpdater.on("update-not-available", info => {
 
 app.on("ready", function () {
   createWindow();
+  session.fromPartition("default").setPermissionRequestHandler((webContents, permission, callback) => {
+    let allowedPermissions = ["audioCapture"]; // Full list here: https://developer.chrome.com/extensions/declare_permissions#manifest
+
+    if (allowedPermissions.includes(permission)) {
+        callback(true); // Approve permission request
+    } else {
+        console.error(
+            `The application tried to request permission for '${permission}'. This permission was not whitelisted and has been blocked.`
+        );
+
+        callback(false); // Deny
+    }
+});
 });
 
 app.on('before-quit', (event) => {
   //console.log('before exit ....');
+  mainWindow.webContents.send('test','in before-quit');
 });
 
 app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') app.quit();//db.close();
+  if (process.platform !== 'darwin') app.quit();db.close();
 })
 
 app.on('activate', function () {
   if (mainWindow === null) createWindow()
 })
-
-autoUpdater.on('update-available', () => {
-  mainWindow.webContents.send('update_available');
-});
-
-autoUpdater.on('update-downloaded', () => {
-  mainWindow.webContents.send('update_downloaded');
-});
