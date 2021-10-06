@@ -63,7 +63,8 @@
           <input (change)="onToggleChange()" formControlName="notification"  type="checkbox" checked>
           <span class="slider round"></span>
         </label>
-        &nbsp; &nbsp; <h5> {{formData.value.notification ? 'On' : 'Off'}}</h5>
+        &nbsp; &nbsp; <h5 style="color:green" *ngIf="formData.value.notification"> On</h5>
+         <h5 style="color:red" *ngIf="!formData.value.notification">Off</h5>
       </div> 
       <div *ngIf="formData.value.notification" class="form-group d-flex">
         <h5 style="width: 130px;">Date time:</h5> &nbsp; &nbsp;
