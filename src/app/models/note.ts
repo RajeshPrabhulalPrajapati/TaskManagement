@@ -6,4 +6,5 @@ export interface Note{
     todo:string;
     notificationDateTime:Date;
     notification:boolean;
+    userId:string;
 }

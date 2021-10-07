@@ -1,8 +1,8 @@
 const { autoUpdater } = require('electron-updater');
-const { app, BrowserWindow, globalShortcut, Tray, Menu, MenuItem, dialog, ipcMain, systemPreferences,session } = require('electron');
+const { app, BrowserWindow, globalShortcut, Tray, Menu, MenuItem, dialog, ipcMain, systemPreferences, session } = require('electron');
 const os = require('os');
 systemPreferences.getMediaAccessStatus("microphone");
-
+const { v4: uuidv4} = require('uuid');
 // const Mic  = require('node-microphone');
 
 const sqlite3 = require('@journeyapps/sqlcipher').verbose();
@@ -56,8 +56,14 @@ async function createWindow() {
   db = new sqlite3.Database(path.join(app.getPath('userData'), `/myDB`));
   db.run("PRAGMA cipher_compatibility = 4");
   db.run("PRAGMA key = 'Prabhulal'");
-  //sqlite.connect(path.join(__dirname, `/dist/assets/myDB.db`),'myPass','aes-256-ctr');
-  db.run("CREATE TABLE IF NOT EXISTS Notes (NoteId uniqueidentifier primary key,Title varchar(100),Content varchar(1000),Todo varchar(200),Priority varchar(20),NotificationDateTime datetime,Notification bit);");
+  //sqlite.connect(path.join(__dirname, `/dist/assets/myDB.db`),'myPass','aes-256-ctr'); 
+
+  db.run("CREATE TABLE IF NOT EXISTS Users (UserId uniqueidentifier primary key,UserName varchar(100),Password varchar(100));");
+  db.run(`CREATE TABLE IF NOT EXISTS Notes (NoteId uniqueidentifier primary key,Title varchar(100),Content varchar(1000),Todo varchar(200),Priority varchar(20),NotificationDateTime datetime,Notification bit,
+  UserId uniqueidentifier ,
+            FOREIGN KEY (UserId)
+          REFERENCES Users (UserId)
+    );`);
   //sqlite.run("CREATE TABLE IF NOT EXISTS Emp (EmpId uniqueidentifier primary key,EmpName varchar(50),EmpDepartment varchar(50),EmpPhoneNo varchar(50));")
   // const empRepo = connection.getRepository(Emp);
 
@@ -138,7 +144,7 @@ async function createWindow() {
   // mic.on('error', (error) => {
   //   mainWindow.webContents.send("err",error); 
   // });
-  ipcMain.on('showNotification', (event,title) => {
+  ipcMain.on('showNotification', (event, title) => {
     notifier.notify({
       title: 'Hello ',
       message: `Now time to start  the task "${title}"`,
@@ -156,11 +162,12 @@ async function createWindow() {
   ipcMain.on('get-notes', async (event, _item) => {
     try {
       console.log("in Get notes..");
-      db.all("select * from Notes", (err, rows) => {
+      mainWindow.webContents.send("test", _item);
+      db.all("select * from Notes where UserId= ?",[_item.userId], (err, rows) => {
         if (err) {
           return console.log(err.message);
         }
-        console.log("Notes", rows)
+        console.log("Notes", rows);
         mainWindow.webContents.send("noteList", rows);
       });
     } catch (err) {
@@ -168,9 +175,84 @@ async function createWindow() {
     }
   });
 
+  // ipcMain.on('login', async (event, _item) => {
+  //   try {
+  //     mainWindow.webContents.send("test", 'in login');
+  //     db.get("select * from Users where UserName=?", [_item.userName], (err, user) => {
+  //       if (err) {
+  //         mainWindow.webContents.send("test", err.message);
+  //         return console.log(err.message);
+
+  //       }
+  //       if (user && user != null) {
+  //         _item.userId = user.UserId;
+  //        // mainWindow.webContents.send("test", _item);
+  //         mainWindow.webContents.send("loginResult",_item);
+  //       }
+  //       else {
+  //         _item.userId = uuidv4();
+  //         db.run(`INSERT INTO Users (UserId,UserName,Password) VALUES(?,?,?)`, [_item.userId, _item.userName, _item.password], function (err) {
+  //           if (err) {  }         
+  //          // mainWindow.webContents.send("test", "user created");
+  //           mainWindow.webContents.send("loginResult", _item);
+  //         });
+  //       }
+
+  //     });
+
+  //   } catch (err) {
+  //     throw err;
+  //   }
+  // });
+
+  ipcMain.handle('login', async (event, _item) => {
+    try {
+      mainWindow.webContents.send("test", 'in login');
+
+      return await new Promise((resolve,reject)=>{
+        db.get("select * from Users where UserName=?", [_item.userName],async  (err, user) => {
+
+          if (err) {
+            mainWindow.webContents.send("test", err.message);
+            reject(console.log(err.message));
+          }
+  
+          if (user && user != null) {
+            if(user.Password === _item.password)
+            {
+              _item.userId = user.UserId;
+              //mainWindow.webContents.send("test", _item);
+              resolve(_item);
+            }
+            else
+            {
+              resolve(false);
+            } 
+           
+          }
+          else {
+            _item.userId = uuidv4();
+            db.run(`INSERT INTO Users (UserId,UserName,Password) VALUES(?,?,?)`, [_item.userId, _item.userName, _item.password], function (err) {
+              if (err) { 
+                return console.log(err.message);
+               }         
+              mainWindow.webContents.send("test", "user created");
+              resolve(_item);
+            });
+          }
+  
+        });
+        }) ;
+    } catch (err) {
+      throw err;
+    }
+   
+  })
+
+
   ipcMain.on('add-note', async (event, _item) => {
     try {
-      db.run(`INSERT INTO Notes (NoteId,Title,Content,Todo,Priority,NotificationDateTime,Notification) VALUES(?,?,?,?,?,?,?)`, [_item.noteId, _item.title, _item.content, _item.todo, _item.priority,_item.notificationDateTime,_item.notification], function (err) {
+      db.run(`INSERT INTO Notes (NoteId,Title,Content,Todo,Priority,NotificationDateTime,Notification,UserId) VALUES(?,?,?,?,?,?,?,?)`, [_item.noteId, _item.title, _item.content, _item.todo, _item.priority, _item.notificationDateTime, _item.notification,_item.userId], function (err) {
         if (err) {
           return console.log(err.message);
         }
@@ -182,7 +264,7 @@ async function createWindow() {
   });
   ipcMain.on('update-note', async (event, _item) => {
     try {
-      db.run(`update Notes SET Title=?, Content=?, Todo=?, Priority=?, NotificationDateTime=?,Notification=? where NoteId =?`, [_item.title, _item.content, _item.todo, _item.priority,_item.notificationDateTime,_item.notification, _item.noteId], function (err) {
+      db.run(`update Notes SET Title=?, Content=?, Todo=?, Priority=?, NotificationDateTime=?,Notification=? where NoteId =?`, [_item.title, _item.content, _item.todo, _item.priority, _item.notificationDateTime, _item.notification,_item.noteId], function (err) {
         if (err) {
           return console.log(err.message);
         }
@@ -272,7 +354,7 @@ async function createWindow() {
 
     mainWindow.once('ready-to-show', () => {
       mainWindow.webContents.send('test', '0');
-     // mainWindow.webContents.send('test',app.getPath('userData'));
+      // mainWindow.webContents.send('test',app.getPath('userData'));
       //mainWindow.webContents.send('test','in app ready');
       autoUpdater.checkForUpdatesAndNotify();
     });
@@ -356,24 +438,24 @@ app.on("ready", function () {
     let allowedPermissions = ["audioCapture"]; // Full list here: https://developer.chrome.com/extensions/declare_permissions#manifest
 
     if (allowedPermissions.includes(permission)) {
-        callback(true); // Approve permission request
+      callback(true); // Approve permission request
     } else {
-        console.error(
-            `The application tried to request permission for '${permission}'. This permission was not whitelisted and has been blocked.`
-        );
+      console.error(
+        `The application tried to request permission for '${permission}'. This permission was not whitelisted and has been blocked.`
+      );
 
-        callback(false); // Deny
+      callback(false); // Deny
     }
-});
+  });
 });
 
 app.on('before-quit', (event) => {
   //console.log('before exit ....');
-  mainWindow.webContents.send('test','in before-quit');
+  mainWindow.webContents.send('test', 'in before-quit');
 });
 
 app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') app.quit();db.close();
+  if (process.platform !== 'darwin') app.quit(); db.close();
 })
 
 app.on('activate', function () {

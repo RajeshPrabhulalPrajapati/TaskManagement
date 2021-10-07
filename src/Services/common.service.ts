@@ -33,9 +33,9 @@ export class CommonService {
     return of(
       this.ipc?.send('delete-note', noteId));
   }
-  getNotes(): Observable<any> {
+  getNotes(user:any): Observable<any> {
     return of(
-      this.ipc?.send('get-notes',""));
+      this.ipc?.send('get-notes',user));
   }
   
 }

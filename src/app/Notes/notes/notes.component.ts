@@ -33,7 +33,8 @@ export class NotesComponent implements OnInit {
   toggleValue = false;
   isoStr = new Date().toISOString();
   currDate:any = this.isoStr.substring(0,this.isoStr.length-8);
-
+  userData:any;
+  
   constructor(private commonService: CommonService, private ngZone: NgZone, private authService: AuthService, private router: Router) {
     this.formData = new FormGroup({
       priority: new FormControl("1", Validators.required),
@@ -110,11 +111,13 @@ export class NotesComponent implements OnInit {
 
   ngOnInit(): void {
 
+    this.userData = localStorage.getItem("userData");
+    this.userData = JSON.parse(this.userData);
     interval(50000).subscribe(x => {
       this.checkForNotification();
     });
 
-    this.commonService.getNotes().subscribe((notes) => { });
+    this.commonService.getNotes(this.userData).subscribe((notes) => { });
 
     this.ipc?.on('noteList', (event, data) => {
       console.log("res =>", data);
@@ -237,8 +240,11 @@ export class NotesComponent implements OnInit {
   }
 
   logout() {
-    this.authService.logout();
-    this.router.navigate(['']);
+    if(confirm("Are you sure , want to logout ?"))
+    {
+      this.authService.logout();
+      this.router.navigate(['']);
+    }   
   }
 
   addUpdateNote() {
@@ -249,8 +255,8 @@ export class NotesComponent implements OnInit {
         note.content = this.formData.value.content;
         note.todo = this.formData.value.todo;
         note.priority = this.formData.value.priority;
-         note.notificationDateTime = this.formData.value.notificationDateTime;
-      note.notification = this.formData.value.notification;
+        note.notificationDateTime = this.formData.value.notificationDateTime;
+        note.notification = this.formData.value.notification;
         this.commonService.updateNote(note).subscribe((res) => { });
       }
     }
@@ -263,6 +269,7 @@ export class NotesComponent implements OnInit {
       note.title = this.formData.value.title;
       note.content = this.formData.value.content;
       note.todo = this.formData.value.todo;
+      note.userId = this.userData.userId;
       this.notes.push(note);
       this.commonService.addNote(note).subscribe((res) => { });
     }

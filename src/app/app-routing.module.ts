@@ -6,18 +6,18 @@ import { LoginComponent } from './User/login/login.component';
 import { RegisterComponent } from './User/register/register.component';
 
 const routes: Routes = [
-  // {
-  //   path:'login',
-  //   component:LoginComponent
-  // },
+  {
+    path:'',
+    component:LoginComponent
+  },
   // {
   //   path:'register',
   //   component:RegisterComponent
   // },
   {
-    path:'',
+    path:'note',
     component:NotesComponent    
-  },
+  }
   // {
   //   path:'',
   //   component:RegisterComponent
