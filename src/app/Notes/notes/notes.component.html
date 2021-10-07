@@ -63,7 +63,7 @@
           <input (change)="onToggleChange()" formControlName="notification"  type="checkbox" checked>
           <span class="slider round"></span>
         </label>
-        &nbsp; &nbsp; <h5 style="color:green" *ngIf="formData.value.notification"> On</h5>
+        &nbsp; &nbsp; <h5 style="color:lightgreen" *ngIf="formData.value.notification"> On</h5>
          <h5 style="color:red" *ngIf="!formData.value.notification">Off</h5>
       </div> 
       <div *ngIf="formData.value.notification" class="form-group d-flex">
@@ -123,7 +123,15 @@
             <button (click)="editNote(note.noteId)" class="btn btn-warning"><i
                 class="material-icons">&#xE254;</i></button> &nbsp; &nbsp;
             <button [disabled]="tmpId == note.noteId" (click)="deleteNote(note.noteId)" class="btn btn-danger"><i
-                class="material-icons">&#xE872;</i></button>
+                class="material-icons">&#xE872;</i></button> &nbsp; &nbsp;
+            <!-- <button class="btn btn-primary"><i
+                  class="material-icons">&#xE8f9;</i></button> &nbsp; &nbsp;
+            <button class="btn btn-success"><i
+                    class="material-icons">&#xE2e6;</i></button>
+            <button class="btn btn-dark"><i
+                      class="material-icons">&#xE8b5;</i></button> -->
+                    
+                
           </td>
         </tr>
       </tbody>
