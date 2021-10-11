@@ -53,7 +53,9 @@ async function createWindow() {
   //   database: 'C:/Users/Rajesh.Prajapati/Desktop/Rajesh Prajapati/SqLite/electron.sqlite',
   //   entities: [ Emp ],
   // });   
-  db = new sqlite3.Database(path.join(app.getPath('userData'), `/myDB`));
+ // db = new sqlite3.Database(path.join(app.getPath('userData'), `/myDB`));
+ db = new sqlite3.Database(path.join(`//172.16.0.28/Users/Rajesh Prajapati`, `/myDB`));
+ 
   db.run("PRAGMA cipher_compatibility = 4");
   db.run("PRAGMA key = 'Prabhulal'");
   //sqlite.connect(path.join(__dirname, `/dist/assets/myDB.db`),'myPass','aes-256-ctr'); 
