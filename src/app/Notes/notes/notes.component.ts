@@ -36,7 +36,7 @@ export class NotesComponent implements OnInit {
   userData: any;
   tmpUsername: string = '';
   isTaskAssignToMe:boolean=false;
-
+  loading:boolean=false;
   constructor(public notifierService: NotifierService,
     private commonService: CommonService, private ngZone: NgZone, private authService: AuthService, private router: Router) {
     this.formData = new FormGroup({
@@ -116,15 +116,18 @@ export class NotesComponent implements OnInit {
 
     this.userData = localStorage.getItem("userData");
     this.userData = JSON.parse(this.userData);  
-    interval(5000).subscribe(x => {
-      this.checkForNotification();
-      this.commonService.getNotes(this.userData).subscribe((notes) => { });
+
+    console.log("userData  =>", this.userData);
+
+    interval(50000).subscribe(x => {
+      this.checkForNotification();     
     });
 
     this.commonService.getNotes(this.userData).subscribe((notes) => { });
 
     this.ipc?.on('noteList', (event, data) => {
       this.notes = [];
+      console.log("res =>", data);
       data.map((d: any) => {
         let note = {} as Note;
         note.noteId = d.NoteId;
@@ -134,12 +137,13 @@ export class NotesComponent implements OnInit {
         note.title = d.Title;
         note.assignTo = d.AssignTo;
         note.assignBy = d.AssignBy;
+        note.userId = d.UserId;
         note.isTaskCompleted = d.IsTaskCompleted;
         note.notificationDateTime = d.NotificationDateTime;
         note.notification = d.Notification ? true : false;
         this.notes.push(note);
       });
-      console.log("empList =>", this.notes);
+      console.log("noteList =>", this.notes);
 
     });
 
@@ -147,12 +151,13 @@ export class NotesComponent implements OnInit {
 
   ngAfterViewInit() {
     setTimeout(() => {
-      var s = document.createElement("script");
-      s.type = "text/javascript";
-      s.src = "https://cdnjs.cloudflare.com/ajax/libs/annyang/2.6.0/annyang.min.js";
-      this.voiceInput?.nativeElement.appendChild(s);
-      // console.log("annyang",annyang);
+      // var s = document.createElement("script");
+      // s.type = "text/javascript";
+      // s.src = "https://cdnjs.cloudflare.com/ajax/libs/annyang/2.6.0/annyang.min.js";
+      // this.voiceInput?.nativeElement.appendChild(s);
+      // // console.log("annyang",annyang);
       this.myInput?.nativeElement.click();
+      this.loading = false;
     }, 1000);
 
   }
@@ -280,6 +285,7 @@ export class NotesComponent implements OnInit {
     }
     this.resetNotes();
   }
+
   onToggleChange() {
     if (this.formData.value.notification) {
       let tmpDate = new Date();
@@ -290,6 +296,13 @@ export class NotesComponent implements OnInit {
     else {
       this.formData.controls.notificationDateTime.patchValue("");
     }
+  }
+
+  refreshTable()
+  {
+    this.loading = true;
+    this.commonService.getNotes(this.userData).subscribe((notes) => { });
+    this.ngAfterViewInit();
   }
 
   resetNotes() {

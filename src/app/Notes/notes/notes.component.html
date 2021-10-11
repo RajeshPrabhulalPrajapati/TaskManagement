@@ -14,7 +14,7 @@
         <div>
           <div *ngIf="voiceActiveSectionDisabled || voiceText; else voicesection;">
 
-            <img #voiceInput (click)="startVoiceRecognition()" src="assets/mic2.png" height="40" width="45"
+            <img #voiceInput  class="handCusrsor" (click)="startVoiceRecognition()" src="assets/mic2.png" height="40" width="45"
               alt="Static Image" />
 
             <br>
@@ -83,7 +83,7 @@
     </form>
   </div>
 
-  <div style="margin-top: 20px;" *ngIf="notes.length>0">
+  <div style="margin-top: 20px;" >
     <h3 class="d-flex justify-content-center">
       <span style="color:#FF0000">N</span>
       <span style="color:#66CC66">o</span>
@@ -91,7 +91,13 @@
       <span style="color:blueviolet">e</span>
       <span style="color:#FF0066">s</span>
     </h3>
-    <table class="table table-bordered">
+  
+    <div>
+      <img  (click)="refreshTable()" class="handCusrsor" src="assets/refreshTable.png" height="30" width="35"
+              alt="Static Image" />              
+    </div>
+    
+    <table  class="table table-bordered">
       <thead>
         <tr>
           <th>Task No. </th>
@@ -103,8 +109,9 @@
           <th>Priority</th>
           <th>Action</th>
         </tr>
-      </thead>
-      <tbody>
+      </thead>    
+      <tbody  *ngIf="notes.length>0">
+       
         <tr mdbTableCol *ngFor="let note of notes;let ind = index">
           <td>{{ind+1}}</td>
           <th style="word-wrap: break-word;max-width: 100px;">{{note.title}}</th>
@@ -250,3 +257,30 @@
   </div>
   
 </div> -->
+
+<div *ngIf="loading" class="d-flex justify-content-center">
+  <div class="spinner-grow text-primary" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <div class="spinner-grow text-secondary" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <div class="spinner-grow text-success" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <div class="spinner-grow text-danger" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <div class="spinner-grow text-warning" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <div class="spinner-grow text-info" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <div class="spinner-grow text-light" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+  <div class="spinner-grow text-dark" role="status">
+    <span class="visually-hidden">Loading...</span>
+  </div>
+</div>
