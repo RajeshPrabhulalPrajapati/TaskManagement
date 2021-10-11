@@ -8,7 +8,7 @@
                         <!-- <a [routerLink]="['']"class="signup-image-link">Create an account</a> -->
                     </div>
 
-                    <div class="signin-form">
+                    <div #myDiv class="signin-form">
                         <h2 class="form-title">Sign in</h2>
                         <form [formGroup]="formData" (ngSubmit)="onClickSubmit(formData.value)" class="register-form" id="login-form">
                             <div class="form-group">

@@ -120,17 +120,17 @@
           <td>{{priorities[note.priority]}}</td>
           <td>
 
-            <button (click)="editNote(note.noteId)" class="btn btn-warning"><i
+            <button *ngIf="userData.userName != note.assignTo" [disabled]="note.assignTo" (click)="editNote(note.noteId)" class="btn btn-warning"><i
                 class="material-icons">&#xE254;</i></button> &nbsp; &nbsp;
-            <button [disabled]="tmpId == note.noteId" (click)="deleteNote(note.noteId)" class="btn btn-danger"><i
+            <button *ngIf="userData.userName != note.assignTo" [disabled]="tmpId == note.noteId" (click)="deleteNote(note.noteId)" class="btn btn-danger"><i
                 class="material-icons">&#xE872;</i></button> &nbsp; &nbsp;
-            <!-- <button class="btn btn-primary"><i
-                  class="material-icons">&#xE8f9;</i></button> &nbsp; &nbsp;
-            <button class="btn btn-success"><i
-                    class="material-icons">&#xE2e6;</i></button>
-            <button class="btn btn-dark"><i
-                      class="material-icons">&#xE8b5;</i></button> -->
-                    
+            <button  *ngIf="!note.assignTo" data-bs-toggle="modal" data-bs-target="#myModal" (click)="assignTask(note.noteId)" class="btn btn-primary"><i
+                  class="material-icons">&#xE8f9;</i></button>            
+            <button (click)="assignedTask(note)" *ngIf="note.assignTo && !note.isTaskCompleted" data-bs-toggle="modal" data-bs-target="#taskAssignedModal"  class="btn btn-dark"><i
+                      class="material-icons">&#xE8b5;</i></button>     &nbsp; &nbsp;
+            <button (click)="assignTask(note.noteId)" *ngIf="userData.userName == note.assignTo || note.isTaskCompleted" 
+            data-bs-toggle="modal" data-bs-target="#taskCompletedModal"  class="btn btn-success"><i
+                    class="material-icons">&#xE2e6;</i></button>                              
                 
           </td>
         </tr>
@@ -149,7 +149,7 @@
     Restart
   </button>
 </div>
-
+<notifier-container></notifier-container>
 <!--    
 <button (click)="startRecording()">
   start
@@ -159,3 +159,94 @@
 <button (click)="endRecording()">
   stop
 </button> -->
+
+
+<!-- Modal -->
+<div class="modal fade" id="myModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Assign task</h5>
+        <button (click)="cancelAssignTask()" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">           
+          <input [(ngModel)]="tmpUsername" class="form-control"  type="text" name="Username" id="Username" placeholder="Username" />
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button  (click)="cancelAssignTask()" type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+        <button (click)="confirmAssignTask(tmpId)"  type="button" class="btn btn-primary"  data-bs-dismiss="modal">Assign</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="taskAssignedModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Assigned task</h5>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">                 
+         <label *ngIf="!isTaskAssignToMe" style="margin-left: 20px;" for="assignedTask">Task has been assigned to <b>{{tmpUsername}}</b></label>      
+         <label *ngIf="isTaskAssignToMe" style="margin-left: 20px;" for="assignedTask">Task has been assigned By <b>{{tmpUsername}}</b></label> 
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Ok</button>  
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="taskCompletedModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h5 class="modal-title" id="exampleModalLabel">Task completed</h5>
+        <button  (click)="cancelAssignTask()" type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">        
+          <label  style="margin-left: 20px;" for="assignedTask">Have you completed the task ? </label>    
+      </div>
+      <div class="modal-footer">
+        <button  (click)="cancelAssignTask()" type="button" class="btn btn-secondary" data-bs-dismiss="modal">No</button>
+        <button (click)="taskCompleted(tmpId)"  type="button" class="btn btn-primary"  data-bs-dismiss="modal">Yes</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 
+<div class="container">  
+
+  <div class="modal" id="myModal">
+    <div class="modal-dialog">
+      <div class="modal-content">
+      
+     
+        <div class="modal-header">
+          <h4 class="modal-title">Assign task</h4>
+          <button (click)="cancelAssignTask()" type="button" class="close" data-dismiss="modal">&times;</button>
+        </div>
+
+        <div class="modal-body">
+
+          <div class="form-group">           
+            <input [(ngModel)]="tmpUsername" class="form-control"  type="text" name="Username" id="Username" placeholder="Username" />
+          </div>
+
+        </div>
+        
+        <div class="modal-footer">
+          <button type="button" (click)="cancelAssignTask()"  class="btn btn-outline-primary" data-dismiss="modal">Cancel</button> &nbsp; &nbsp; 
+
+          <button type="button" (click)="confirmAssignTask(tmpId)" class="btn btn-outline-success" data-dismiss="modal">Assign</button>
+        </div>    
+        
+      </div>
+    </div>
+  </div>
+  
+</div> -->

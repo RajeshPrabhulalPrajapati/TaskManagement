@@ -6,6 +6,8 @@ import { AppComponent } from './app.component';
 import { RegisterComponent } from './User/register/register.component';
 import { LoginComponent } from './User/login/login.component';
 import { NotesComponent } from './Notes/notes/notes.component';
+import { NotifierModule } from 'angular-notifier';
+
 declare const annyang: any;
 
 @NgModule({
@@ -19,7 +21,8 @@ declare const annyang: any;
     BrowserModule,
     AppRoutingModule,
     ReactiveFormsModule,
-    FormsModule
+    FormsModule,
+    NotifierModule
   ],
   providers: [],
   bootstrap: [AppComponent]

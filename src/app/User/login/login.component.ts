@@ -1,4 +1,4 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, ElementRef, OnInit, ViewChild } from '@angular/core';
 import { Router } from '@angular/router';
 import { AuthService } from 'src/Services/auth-service.service';
 import { FormGroup, FormControl, Validators } from '@angular/forms';
@@ -11,6 +11,7 @@ import { IpcRenderer } from 'electron';
 })
 export class LoginComponent implements OnInit {
   private ipc: IpcRenderer | undefined;
+  @ViewChild('myDiv') myInput: ElementRef | undefined;
   userName: string='';
   password: string='';
   formData: FormGroup;
@@ -47,6 +48,13 @@ export class LoginComponent implements OnInit {
   ngOnInit() {  
  }
 
+
+ ngAfterViewInit() {
+  setTimeout(() => {  
+    this.myInput?.nativeElement.click();
+  }, 1000);
+
+}
 
  onClickSubmit(data: any) {
     this.userName = data.userName;

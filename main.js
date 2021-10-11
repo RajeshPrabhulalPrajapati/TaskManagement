@@ -2,7 +2,7 @@ const { autoUpdater } = require('electron-updater');
 const { app, BrowserWindow, globalShortcut, Tray, Menu, MenuItem, dialog, ipcMain, systemPreferences, session } = require('electron');
 const os = require('os');
 systemPreferences.getMediaAccessStatus("microphone");
-const { v4: uuidv4} = require('uuid');
+const { v4: uuidv4 } = require('uuid');
 // const Mic  = require('node-microphone');
 
 const sqlite3 = require('@journeyapps/sqlcipher').verbose();
@@ -59,9 +59,19 @@ async function createWindow() {
   //sqlite.connect(path.join(__dirname, `/dist/assets/myDB.db`),'myPass','aes-256-ctr'); 
 
   db.run("CREATE TABLE IF NOT EXISTS Users (UserId uniqueidentifier primary key,UserName varchar(100),Password varchar(100));");
-  db.run(`CREATE TABLE IF NOT EXISTS Notes (NoteId uniqueidentifier primary key,Title varchar(100),Content varchar(1000),Todo varchar(200),Priority varchar(20),NotificationDateTime datetime,Notification bit,
-  UserId uniqueidentifier ,
-            FOREIGN KEY (UserId)
+  db.run(`CREATE TABLE IF NOT EXISTS Notes (
+        NoteId uniqueidentifier primary key,
+        Title varchar(100),
+        Content varchar(1000),
+        Todo varchar(200),
+        Priority varchar(20),
+        NotificationDateTime datetime,
+        Notification bit,
+        UserId uniqueidentifier ,
+        AssignTo varchar(100),
+        AssignBy varchar(100),
+        IsTaskCompleted bit,
+        FOREIGN KEY (UserId)
           REFERENCES Users (UserId)
     );`);
   //sqlite.run("CREATE TABLE IF NOT EXISTS Emp (EmpId uniqueidentifier primary key,EmpName varchar(50),EmpDepartment varchar(50),EmpPhoneNo varchar(50));")
@@ -161,9 +171,9 @@ async function createWindow() {
 
   ipcMain.on('get-notes', async (event, _item) => {
     try {
-      console.log("in Get notes..");
+      mainWindow.webContents.send("test", "in Get notes..");
       mainWindow.webContents.send("test", _item);
-      db.all("select * from Notes where UserId= ?",[_item.userId], (err, rows) => {
+      db.all("select * from Notes where UserId= ? OR AssignTo = ?", [_item.userId, _item.userName], (err, rows) => {
         if (err) {
           return console.log(err.message);
         }
@@ -207,52 +217,96 @@ async function createWindow() {
 
   ipcMain.handle('login', async (event, _item) => {
     try {
-      mainWindow.webContents.send("test", 'in login');
-
-      return await new Promise((resolve,reject)=>{
-        db.get("select * from Users where UserName=?", [_item.userName],async  (err, user) => {
-
+      return await new Promise((resolve, reject) => {
+        db.get("select * from Users where UserName=?", [_item.userName], async (err, user) => {
           if (err) {
             mainWindow.webContents.send("test", err.message);
             reject(console.log(err.message));
           }
-  
           if (user && user != null) {
-            if(user.Password === _item.password)
-            {
+            if (user.Password === _item.password) {
               _item.userId = user.UserId;
               //mainWindow.webContents.send("test", _item);
               resolve(_item);
             }
-            else
-            {
+            else {
               resolve(false);
-            } 
-           
+            }
+
           }
           else {
             _item.userId = uuidv4();
             db.run(`INSERT INTO Users (UserId,UserName,Password) VALUES(?,?,?)`, [_item.userId, _item.userName, _item.password], function (err) {
-              if (err) { 
+              if (err) {
                 return console.log(err.message);
-               }         
+              }
               mainWindow.webContents.send("test", "user created");
               resolve(_item);
             });
           }
-  
+
         });
-        }) ;
+      });
     } catch (err) {
       throw err;
     }
-   
-  })
 
+  });
+
+  ipcMain.handle('assignTask', async (event, _item) => {
+    mainWindow.webContents.send("test", 'in assignTask');
+    return await new Promise((resolve, reject) => {
+      db.get("select * from Users where UserName=?", [_item.assignTo], async (err, user) => {
+        if (err) {
+          mainWindow.webContents.send("test", err.message);
+          reject(console.log(err.message));
+        }
+        mainWindow.webContents.send("test", 'in select user');
+        if (user && user != null) {    
+          resolve(true);
+        }
+        else {
+          mainWindow.webContents.send("test", 'in not found user');
+          resolve(false);
+        }
+
+      });
+    });
+
+  });
+
+  ipcMain.handle('updateNoteForAssignTask', async (event, _item) => {
+    mainWindow.webContents.send("test", 'in updateNoteForAssignTask');
+    return await new Promise((resolve, reject) => {
+      db.run(`update Notes SET AssignTo=? , AssignBy=? where NoteId =?`, [_item.assignTo, _item.assignBy, _item.noteId], function (err) {
+        if (err) {
+          mainWindow.webContents.send("test", (console.log(err.message)));
+          reject(err);
+        }
+        resolve(true);
+        mainWindow.webContents.send("test", "in updateItem"); 
+      });     
+    });
+  });
+
+  ipcMain.handle('taskCompleted', async (event, _item) => {
+    mainWindow.webContents.send("test", 'in taskCompleted');
+    return await new Promise((resolve, reject) => {
+      db.run(`update Notes SET IsTaskCompleted =? where NoteId =?`, [true, _item.noteId], function (err) {
+        if (err) {
+          mainWindow.webContents.send("test", (console.log(err.message)));
+          reject(err);
+        }
+        resolve(true);
+        mainWindow.webContents.send("test", "in taskCompleted"); 
+      });     
+    });
+  });
+ 
 
   ipcMain.on('add-note', async (event, _item) => {
     try {
-      db.run(`INSERT INTO Notes (NoteId,Title,Content,Todo,Priority,NotificationDateTime,Notification,UserId) VALUES(?,?,?,?,?,?,?,?)`, [_item.noteId, _item.title, _item.content, _item.todo, _item.priority, _item.notificationDateTime, _item.notification,_item.userId], function (err) {
+      db.run(`INSERT INTO Notes (NoteId,Title,Content,Todo,Priority,NotificationDateTime,Notification,UserId) VALUES(?,?,?,?,?,?,?,?)`, [_item.noteId, _item.title, _item.content, _item.todo, _item.priority, _item.notificationDateTime, _item.notification, _item.userId], function (err) {
         if (err) {
           return console.log(err.message);
         }
@@ -262,9 +316,10 @@ async function createWindow() {
       throw err;
     }
   });
+
   ipcMain.on('update-note', async (event, _item) => {
     try {
-      db.run(`update Notes SET Title=?, Content=?, Todo=?, Priority=?, NotificationDateTime=?,Notification=? where NoteId =?`, [_item.title, _item.content, _item.todo, _item.priority, _item.notificationDateTime, _item.notification,_item.noteId], function (err) {
+      db.run(`update Notes SET Title=?, Content=?, Todo=?, Priority=?, NotificationDateTime=?,Notification=? where NoteId =?`, [_item.title, _item.content, _item.todo, _item.priority, _item.notificationDateTime, _item.notification, _item.noteId], function (err) {
         if (err) {
           return console.log(err.message);
         }

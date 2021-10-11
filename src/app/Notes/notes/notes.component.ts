@@ -1,6 +1,7 @@
 import { Component, ElementRef, NgZone, OnInit, ViewChild } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { Router } from '@angular/router';
+import { NotifierService } from 'angular-notifier';
 import { Annyang } from 'annyang';
 import { IpcRenderer } from 'electron';
 import { interval } from 'rxjs';
@@ -29,13 +30,15 @@ export class NotesComponent implements OnInit {
   voiceActiveSectionSuccess: boolean = false;
   voiceActiveSectionListening: boolean = false;
   voiceText: any;
-  tmpAnnyang: any;
   toggleValue = false;
   isoStr = new Date().toISOString();
-  currDate:any = this.isoStr.substring(0,this.isoStr.length-8);
-  userData:any;
-  
-  constructor(private commonService: CommonService, private ngZone: NgZone, private authService: AuthService, private router: Router) {
+  currDate: any = this.isoStr.substring(0, this.isoStr.length - 8);
+  userData: any;
+  tmpUsername: string = '';
+  isTaskAssignToMe:boolean=false;
+
+  constructor(public notifierService: NotifierService,
+    private commonService: CommonService, private ngZone: NgZone, private authService: AuthService, private router: Router) {
     this.formData = new FormGroup({
       priority: new FormControl("1", Validators.required),
       title: new FormControl("", Validators.required),
@@ -94,33 +97,33 @@ export class NotesComponent implements OnInit {
   checkForNotification() {
     if (this.notes.length > 0) {
       const currDate = new Date();
-      currDate.setSeconds(0);     
+      currDate.setSeconds(0);
       this.notes.map(n => {
         const tmpDate = new Date(n.notificationDateTime);
-        tmpDate.setSeconds(0);   
+        tmpDate.setSeconds(0);
         if (tmpDate.getFullYear() === currDate.getFullYear() &&
           tmpDate.getMonth() === currDate.getMonth() &&
           tmpDate.getDate() === currDate.getDate() &&
-          tmpDate.getHours() === currDate.getHours() && 
-          tmpDate.getMinutes() === currDate.getMinutes()) {     
-          this.ipc?.send('showNotification',n.title);
+          tmpDate.getHours() === currDate.getHours() &&
+          tmpDate.getMinutes() === currDate.getMinutes()) {
+          this.ipc?.send('showNotification', n.title);
         }
-      });     
+      });
     }
   }
 
   ngOnInit(): void {
 
     this.userData = localStorage.getItem("userData");
-    this.userData = JSON.parse(this.userData);
-    interval(50000).subscribe(x => {
+    this.userData = JSON.parse(this.userData);  
+    interval(5000).subscribe(x => {
       this.checkForNotification();
+      this.commonService.getNotes(this.userData).subscribe((notes) => { });
     });
 
     this.commonService.getNotes(this.userData).subscribe((notes) => { });
 
     this.ipc?.on('noteList', (event, data) => {
-      console.log("res =>", data);
       this.notes = [];
       data.map((d: any) => {
         let note = {} as Note;
@@ -129,6 +132,9 @@ export class NotesComponent implements OnInit {
         note.todo = d.Todo;
         note.priority = d.Priority;
         note.title = d.Title;
+        note.assignTo = d.AssignTo;
+        note.assignBy = d.AssignBy;
+        note.isTaskCompleted = d.IsTaskCompleted;
         note.notificationDateTime = d.NotificationDateTime;
         note.notification = d.Notification ? true : false;
         this.notes.push(note);
@@ -169,34 +175,34 @@ export class NotesComponent implements OnInit {
   }
 
   initializeVoiceRecognitionCallback(): void {
-    this.tmpAnnyang.addCallback('error', (err: any) => {
+    annyang.addCallback('error', (err: any) => {
       if (err.error === 'network') {
         this.voiceText = "Internet is require";
-        this.tmpAnnyang.abort();
+        annyang.abort();
         this.ngZone.run(() => this.voiceActiveSectionSuccess = true);
       } else if (this.voiceText === undefined) {
         this.ngZone.run(() => this.voiceActiveSectionError = true);
-        this.tmpAnnyang.abort();
+        annyang.abort();
       }
     });
 
-    this.tmpAnnyang.addCallback('soundstart', (res: any) => {
+    annyang.addCallback('soundstart', (res: any) => {
       this.ngZone.run(() => this.voiceActiveSectionListening = true);
     });
 
-    this.tmpAnnyang.addCallback('end', () => {
+    annyang.addCallback('end', () => {
       if (this.voiceText === undefined) {
         this.ngZone.run(() => this.voiceActiveSectionError = true);
-        this.tmpAnnyang.abort();
+        annyang.abort();
       }
     });
 
-    this.tmpAnnyang.addCallback('result', (userSaid: any) => {
+    annyang.addCallback('result', (userSaid: any) => {
       this.ngZone.run(() => this.voiceActiveSectionError = false);
 
       let queryText: any = userSaid[0];
 
-      this.tmpAnnyang.abort();
+      annyang.abort();
 
       this.voiceText = queryText;
       this.formData.controls.content.patchValue(this.voiceText);
@@ -207,23 +213,23 @@ export class NotesComponent implements OnInit {
   }
 
   startVoiceRecognition(): void {
-  
+
     this.voiceActiveSectionDisabled = false;
     this.voiceActiveSectionError = false;
     this.voiceActiveSectionSuccess = false;
     this.voiceText = undefined;
 
-    if (this.tmpAnnyang) {
+    if (annyang) {
       let commands = {
         'demo-annyang': () => { }
       };
 
-      this.tmpAnnyang.addCommands(commands);
+      annyang.addCommands(commands);
 
       this.initializeVoiceRecognitionCallback();
 
-      this.tmpAnnyang.start({ autoRestart: false });
-     
+      annyang.start({ autoRestart: false });
+
     }
   }
 
@@ -234,17 +240,16 @@ export class NotesComponent implements OnInit {
     this.voiceActiveSectionListening = false;
     this.voiceText = undefined;
 
-    if (this.tmpAnnyang) {
-      this.tmpAnnyang.abort();
+    if (annyang) {
+      annyang.abort();
     }
   }
 
   logout() {
-    if(confirm("Are you sure , want to logout ?"))
-    {
+    if (confirm("Are you sure , want to logout ?")) {
       this.authService.logout();
       this.router.navigate(['']);
-    }   
+    }
   }
 
   addUpdateNote() {
@@ -275,17 +280,14 @@ export class NotesComponent implements OnInit {
     }
     this.resetNotes();
   }
-  onToggleChange()
-  {
-    if(this.formData.value.notification)
-    {
+  onToggleChange() {
+    if (this.formData.value.notification) {
       let tmpDate = new Date();
-      tmpDate.setHours(tmpDate.getHours()+6);
-      let tmpDate2 = tmpDate.toISOString();   
-      this.formData.controls.notificationDateTime.patchValue(tmpDate2.substring(0,tmpDate2.length-8));
+      tmpDate.setHours(tmpDate.getHours() + 6);
+      let tmpDate2 = tmpDate.toISOString();
+      this.formData.controls.notificationDateTime.patchValue(tmpDate2.substring(0, tmpDate2.length - 8));
     }
-    else
-    {
+    else {
       this.formData.controls.notificationDateTime.patchValue("");
     }
   }
@@ -331,5 +333,72 @@ export class NotesComponent implements OnInit {
     this.commonService.deleteNote(noteId).subscribe((res) => { });
     this.tmpId = '';
   }
+
+  assignTask(noteId: string) {
+    this.tmpId = noteId;
+  }
+
+  cancelAssignTask() {
+    this.tmpId = '';
+    this.tmpUsername = '';
+  }
+  assignedTask(note:Note)
+  { 
+    if(this.userData.userName == note.assignTo)
+    {
+      this.tmpUsername = note.assignBy;
+      this.isTaskAssignToMe = true;
+    }
+    else
+    {
+      this.tmpUsername = note.assignTo;
+      this.isTaskAssignToMe = false;
+    } 
+  
+  }
+  
+  confirmAssignTask(noteId: string) {
+    if (this.tmpUsername) {
+      this.ipc?.invoke('assignTask', { assignTo: this.tmpUsername,assignBy:this.userData.userName ,noteId: noteId }).then((result) => {
+        console.log('result from confirmAssignTask', result);
+        if (result) {
+          let note = this.notes.find(n => n.noteId == noteId);         
+           if (note) {           
+            note.assignTo = this.tmpUsername;       
+            this.ipc?.invoke('updateNoteForAssignTask', { assignTo: this.tmpUsername,assignBy:this.userData.userName ,noteId: noteId }).then((result) => {
+              this.notifierService.show({
+                message: `Task is assigned successfully to ${this.tmpUsername}`,
+                type: 'success'
+              });
+            });        
+          }
+        }
+        else {
+          this.notifierService.show({
+            message: 'Username does not exist ! please retry with correct username',
+            type: 'info'
+          });
+        }
+        this.cancelAssignTask();
+      });
+    }
+
+  }
+
+  taskCompleted(noteId:string)
+  {
+    this.ipc?.invoke('taskCompleted', {noteId: noteId }).then((result) => {
+      console.log('task completed response',result);
+      let note = this.notes.find(n => n.noteId == noteId);  
+      if(note)
+      { 
+        note.isTaskCompleted = true;
+      }
+      this.notifierService.show({
+        message: `Task status updated to done`,
+        type: 'success'
+      });
+    });    
+  }  
 
 }

@@ -7,4 +7,7 @@ export interface Note{
     notificationDateTime:Date;
     notification:boolean;
     userId:string;
+    assignTo:string;
+    assignBy:string;
+    isTaskCompleted:boolean;
 }
