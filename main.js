@@ -430,7 +430,9 @@ async function createWindow() {
       {
         label: 'Quit', click: function () {
           app.isQuiting = true;
-          app.quit();
+          if (process.platform !== 'darwin') {
+            app.quit()
+          }       
           db.close();
         }
       }
@@ -512,7 +514,11 @@ app.on('before-quit', (event) => {
 });
 
 app.on('window-all-closed', function () {
-  if (process.platform !== 'darwin') app.quit(); db.close();
+  if (process.platform !== 'darwin')
+  {
+    app.quit();
+  } 
+  db.close();
 })
 
 app.on('activate', function () {

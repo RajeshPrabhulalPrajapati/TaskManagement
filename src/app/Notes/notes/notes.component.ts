@@ -10,6 +10,7 @@ import { AuthService } from 'src/Services/auth-service.service';
 import { CommonService } from 'src/Services/common.service';
 import { v4 as uuidv4 } from 'uuid';
 declare var annyang: Annyang;
+declare var $:any;
 
 @Component({
   selector: 'app-notes',
@@ -24,7 +25,7 @@ export class NotesComponent implements OnInit {
   tmpId: string = '';
   priorities = ["Lower", "Medium", "Higher"];
   @ViewChild('myDiv') myInput: ElementRef | undefined;
-  @ViewChild('voiceInput') voiceInput: ElementRef | undefined;
+  @ViewChild('voiceInput') voiceInput: ElementRef | undefined;  
   voiceActiveSectionDisabled: boolean = true;
   voiceActiveSectionError: boolean = false;
   voiceActiveSectionSuccess: boolean = false;
@@ -105,7 +106,8 @@ export class NotesComponent implements OnInit {
           tmpDate.getMonth() === currDate.getMonth() &&
           tmpDate.getDate() === currDate.getDate() &&
           tmpDate.getHours() === currDate.getHours() &&
-          tmpDate.getMinutes() === currDate.getMinutes()) {
+          tmpDate.getMinutes() === currDate.getMinutes() &&
+          n.assignBy != this.userData.userName) {
           this.ipc?.send('showNotification', n.title);
         }
       });
@@ -377,10 +379,11 @@ export class NotesComponent implements OnInit {
         if (result) {
           let note = this.notes.find(n => n.noteId == noteId);         
            if (note) {           
-            note.assignTo = this.tmpUsername;       
+            note.assignTo = this.tmpUsername;    
+            note.assignBy = this.userData.userName;   
             this.ipc?.invoke('updateNoteForAssignTask', { assignTo: this.tmpUsername,assignBy:this.userData.userName ,noteId: noteId }).then((result) => {
               this.notifierService.show({
-                message: `Task is assigned successfully to ${this.tmpUsername}`,
+                message: `Task is assigned successfully to ${note?.assignTo}`,
                 type: 'success'
               });
             });        
@@ -413,5 +416,17 @@ export class NotesComponent implements OnInit {
       });
     });    
   }  
+
+  showTaskCompletedModal(isTaskCompleted: boolean)
+  {
+    if(!isTaskCompleted)
+    {
+      $('#taskCompletedModal').modal('show');
+    }
+    else
+    {
+      this.tmpId='';
+    }
+  }
 
 }

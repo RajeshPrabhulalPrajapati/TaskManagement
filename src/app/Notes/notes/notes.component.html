@@ -135,8 +135,7 @@
                   class="material-icons">&#xE8f9;</i></button>            
             <button (click)="assignedTask(note)" *ngIf="note.assignTo && !note.isTaskCompleted" data-bs-toggle="modal" data-bs-target="#taskAssignedModal"  class="btn btn-dark"><i
                       class="material-icons">&#xE8b5;</i></button>     &nbsp; &nbsp;
-            <button (click)="assignTask(note.noteId)" *ngIf="userData.userName == note.assignTo || note.isTaskCompleted" 
-            data-bs-toggle="modal" data-bs-target="#taskCompletedModal"  class="btn btn-success"><i
+            <button (click)="assignTask(note.noteId); showTaskCompletedModal(note.isTaskCompleted)" *ngIf="userData.userName == note.assignTo || note.isTaskCompleted"  class="btn btn-success"><i
                     class="material-icons">&#xE2e6;</i></button>                              
                 
           </td>
@@ -207,7 +206,7 @@
   </div>
 </div>
 
-<div class="modal fade" id="taskCompletedModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+<div class="modal fade"  id="taskCompletedModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
